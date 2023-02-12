@@ -23,7 +23,7 @@
                                         ValueChanged="@OnCurrencySelect"
                                         Class="ddl-no-bg">
                         <DropDownListSettings>
-                            <DropDownListPopupSettings Width="200px" 
+                            <DropDownListPopupSettings Width="200px"
                                                        Height="auto">
                             </DropDownListPopupSettings>
                         </DropDownListSettings>
@@ -94,9 +94,7 @@
     protected override async Task OnInitializedAsync()
     {
         ml = () => InvokeAsync(StateHasChanged);// PWA infrastructure
-
         Currencies = await currenciesService.GetCurrenciesAsync();
-
         SelectedCurrency = Currencies.FirstOrDefault();
     }
 

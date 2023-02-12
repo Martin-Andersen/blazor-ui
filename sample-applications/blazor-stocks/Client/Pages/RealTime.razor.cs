@@ -1,115 +1,117 @@
 ﻿using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using BlazorFinancePortfolio.Models;
 using BlazorFinancePortfolio.Services;
-using Microsoft.JSInterop;
 using BlazorPro.BlazorSize;
+using Telerik.Blazor.Components;
 
-namespace BlazorFinancePortfolio.Client.Pages
+namespace BlazorFinancePortfolio.Client.Pages;
+
+public partial class RealTime : IDisposable
 {
-    public partial class RealTime : IDisposable
+    [Inject] RealTimeDataService RealTimeDataService { get; set; }
+    [Inject] ResizeListener listener { get; set; }
+    [CascadingParameter] public Currency SelectedCurrency { get; set; }
+    bool ShowAllColumns { get; set; }
+    int LoadDataInterval { get; set; } = 1500;
+    List<RealTimeData> GridData { get; set; }
+    CancellationTokenSource CancelToken;
+
+    int LastViewPortWidth { get; set; }
+
+    private void OnRowRenderHandler(GridRowRenderEventArgs args)
     {
-        [Inject] RealTimeDataService RealTimeDataService { get; set; }
-        [Inject] ResizeListener listener { get; set; }
-        [CascadingParameter] public Currency SelectedCurrency { get; set; }
-        bool ShowAllColumns { get; set; }
-        int LoadDataInterval { get; set; } = 1500;
-        List<RealTimeData> GridData { get; set; }
-        CancellationTokenSource CancelToken;
-        Random rnd = new Random();
+        var model = args.Item as RealTimeData;
+        //args.Class = model.Change > 0 ? "animate__animated animate__flash" : "";
+    }
 
-        int LastViewPortWidth { get; set; }
 
-        protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
+    {
+        await ToggleColumns(null);
+        CancelToken = new CancellationTokenSource();
+        GridData = await RealTimeDataService.GetInitialData(SelectedCurrency.Symbol);
+        await IntervalDataUpdate();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
         {
-            await ToggleColumns(null);
-            CancelToken = new CancellationTokenSource();
-            GridData = await RealTimeDataService.GetInitialData(SelectedCurrency.Symbol);
-            await IntervalDataUpdate();
+            listener.OnResized += WindowResizeHandler;
         }
 
-        protected override async Task OnAfterRenderAsync(bool firstRender)
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    async Task IntervalDataUpdate()
+    {
+        while (CancelToken.Token != null)
         {
-            if (firstRender)
-            {
-                listener.OnResized += WindowResizeHandler;
-            }
-
-            await base.OnAfterRenderAsync(firstRender);
-        }
-
-        async Task IntervalDataUpdate()
-        {
-            while (CancelToken.Token != null)
-            {
-                await Task.Delay(LoadDataInterval, CancelToken.Token);
-                await RefreshData();
-                StateHasChanged();
-            }
-        }
-
-        void StopTimer()
-        {
-            if (CancelToken != null)
-            {
-                CancelToken.Cancel();
-            }
-        }
-
-        async void WindowResizeHandler(object _, BrowserWindowSize window)
-        {
-            if (LastViewPortWidth != window.Width)
-            {
-                LastViewPortWidth = window.Width;
-                await ToggleColumns(window.Width);
-            }
-        }
-
-        protected async Task ToggleColumns(int? windowWidth)
-        {
-            if (windowWidth == null)
-            {
-                BrowserWindowSize currSize = await listener.GetBrowserWindowSize();
-                windowWidth = currSize.Width;
-                LastViewPortWidth = windowWidth.Value;
-            }
-
-            if (windowWidth < 992)
-            {
-                ShowAllColumns = false;
-            }
-            else
-            {
-                ShowAllColumns = true;
-            }
+            await Task.Delay(LoadDataInterval, CancelToken.Token);
+            await RefreshData();
             StateHasChanged();
         }
+    }
 
-        public void Dispose()
+    void StopTimer()
+    {
+        CancelToken?.Cancel();
+    }
+
+    async void WindowResizeHandler(object _, BrowserWindowSize window)
+    {
+        if (LastViewPortWidth != window.Width)
         {
-            listener.OnResized -= WindowResizeHandler;
-            StopTimer();
+            LastViewPortWidth = window.Width;
+            await ToggleColumns(window.Width);
+        }
+    }
+
+    protected async Task ToggleColumns(int? windowWidth)
+    {
+        if (windowWidth == null)
+        {
+            BrowserWindowSize currSize = await listener.GetBrowserWindowSize();
+            windowWidth = currSize.Width;
+            LastViewPortWidth = windowWidth.Value;
         }
 
-        async Task RefreshData()
+        if (windowWidth < 992)
         {
-            foreach (RealTimeData item in GridData)
-            {
-                decimal change = RealTimeDataService.GetRandomChange();
-                item.Change = change;
-                item.Price = item.Price + change;
-            }
+            ShowAllColumns = false;
+        }
+        else
+        {
+            ShowAllColumns = true;
         }
 
-        string GetPriceChangeClass(decimal change)
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        listener.OnResized -= WindowResizeHandler;
+        StopTimer();
+    }
+
+    async Task RefreshData()
+    {
+        foreach (RealTimeData item in GridData)
         {
-            if (change > 0) return "price-up";
-            if (change < 0) return "price-down";
-            return "";
+            decimal change = RealTimeDataService.GetRandomChange();
+            item.Change = change;
+            item.Price += change;
         }
+    }
+
+    string GetPriceChangeClass(decimal change)
+    {
+        if (change > 0) return "price-up";
+        if (change < 0) return "price-down";
+        return "";
     }
 }

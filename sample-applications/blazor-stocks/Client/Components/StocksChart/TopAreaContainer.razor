@@ -8,7 +8,7 @@
     </div>
 
     <ul class="k-reset d-flex col-12 col-sm-8 col-md-6 col-lg-3 justify-content-center justify-content-sm-start">
-        @foreach (TimeFilter filter in TimeFilters)
+        @foreach (var filter in TimeFilters)
         {
             <li class="ml-3">
                 <span class="list-item time-filter-item @( ActiveTimeFilterDuration == filter.Duration ? " active" : "" )"
@@ -26,7 +26,7 @@
                              ValueChanged="@( (long v) => OnIntervalChange(v) )"
                              Width="160px" Class="dropdown-list-selection interval ddl-no-bg">
             <DropDownListSettings>
-                <DropDownListPopupSettings Height="auto" 
+                <DropDownListPopupSettings Height="auto"
                                            Width="155px">
                 </DropDownListPopupSettings>
             </DropDownListSettings>
@@ -37,7 +37,7 @@
 
         <TelerikDropDownList @bind-Value="@MainChartType" Data="@AvailableChartTypes" Width="140px" Class="ddl-no-bg">
             <DropDownListSettings>
-                <DropDownListPopupSettings Height="auto" 
+                <DropDownListPopupSettings Height="auto"
                                            Width="140px">
                 </DropDownListPopupSettings>
             </DropDownListSettings>

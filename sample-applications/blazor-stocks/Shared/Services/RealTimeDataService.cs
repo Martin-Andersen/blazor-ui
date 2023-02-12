@@ -8,7 +8,7 @@ namespace BlazorFinancePortfolio.Services
 {
     public class RealTimeDataService
     {
-        private static Random Rnd { get; set; } = new Random();
+        private static Random Rnd { get; } = new();
 
         public decimal GetRandomChange()
         {

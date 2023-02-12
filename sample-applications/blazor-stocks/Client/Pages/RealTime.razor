@@ -3,13 +3,28 @@
 @using BlazorFinancePortfolio.Models
 @using BlazorFinancePortfolio.Client.Components
 
+<style>
+    .animate__animated.animate__flash {
+      --animate-duration: 4s;
+      animation-fill-mode: none!important;
+      background-color: darkred;
+      color: white;
+    }
+    @*.k-grid .k-master-row.animate__bounceIn.k-alt
+        {
+            background-color: blue;
+        }*@
+</style>
+
 <div class="container" style="padding-bottom: 100px;">
     <div class="d-flex justify-content-center py-5 align-items-center">
         <GridSwitcher />
     </div>
+    <h1 class="animate__animated animate__bounce">An animated element</h1>
     <div class="row d-flex justify-content-center real-time-data">
         <TelerikGrid Data=@GridData
                      ScrollMode="@GridScrollMode.Virtual"
+                     OnRowRender="OnRowRenderHandler"
                      Height="600px" RowHeight="60" PageSize="48" Width="100%">
             <GridColumns>
                 <GridColumn Field="@nameof(RealTimeData.Symbol)" Width="80px" Title="Symbol" Locked="true">
@@ -20,7 +35,9 @@
                 <GridColumn Field="@nameof(RealTimeData.Name)" Width="130px" Title="Name" />
                 <GridColumn Field="@nameof(RealTimeData.Currency)" Width="80px" Title="Currency">
                     <Template>
+                        <span class="animate__animated animate__flash">
                         @SelectedCurrency.Symbol
+                        </span>
                     </Template>
                 </GridColumn>
                 <GridColumn Field="@nameof(RealTimeData.Price)" Width="100px" Title="Price">
